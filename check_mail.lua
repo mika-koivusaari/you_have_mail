@@ -1,9 +1,12 @@
 --define pins
 local ldr_pin=1
 local led_pin=8
+local stop_pin=2
+local sleep_seconds=20
 
 --set pin modes
 gpio.mode(ldr_pin, gpio.INPUT)
+gpio.mode(stop_pin, gpio.INPUT,gpio.PULLUP)
 gpio.mode(led_pin, gpio.OUTPUT)
 
 --mqtt connection is ready, check for mail
@@ -16,6 +19,7 @@ function mqtt_connect(client)
     --there is too much light to know if led is on
     print("Too much light")
     m:publish("/house/mail","too much light",0,0)
+    node.dsleep(sleep_seconds*1000000) --sleep for 20 seconds
   else
     --dark, next we will check if we see led
     print("It's dark, lets see if we have mail.")
@@ -23,30 +27,57 @@ function mqtt_connect(client)
     state=gpio.read(ldr_pin)  --read ldr
     if state==1 then  --we see led, no mail
       print("No mail")
-      m:publish("/house/mail","no mail:(",0,0)
+      m:publish("/house/mail","no mail:(",0,0,mqtt_puback)
     else  --we don't see led, there is something between led and ldr -> mail
       print("Mail")
-      m:publish("/house/mail","you have mail",0,0)
+      m:publish("/house/mail","you have mail",0,0,mqtt_puback)
     end
   end
   gpio.write(led_pin, gpio.LOW) --led off
 end
 
---callback when we gqt mqtt puback
+--callback when we get mqtt close
+function mqtt_close (client)
+  print("Connection to MQTT broker closed. Sleeping.")
+  node.dsleep(sleep_seconds*1000000) --sleep for 20 seconds
+end
+--callback when we get mqtt puback
 function mqtt_puback(client)
   print("message published")
+  m:on("offline", mqtt_close)
+  m:close()
 end
 
 --callback if mqtt connection fails
 function mqtt_fail(client, reason)
-  print("failed reason: "..reason)
+  print("MQTT broker connection failed reason: "..reason)
 end
 
--- init mqtt client with keepalive timer 120sec
-print("Create MQTT client.")
-m = mqtt.Client("mailESP", 120, nil, nil)
-
-print("Connect to MQTT server.")
-m:connect("192.168.0.106", 1883, 0, mqtt_connect, 
+--when we get an ip connect to mqtt broker
+function wifi_status(previous_state)
+  print("Got IP.")
+  print("Connect to MQTT server.")
+  m:connect("192.168.0.106", 1883, 0, mqtt_connect, 
                                       mqtt_fail)
+end
+
+--if stop pin has been pulled to ground then stop
+--this is so you can update lua scripts without flashing again
+if gpio.read(stop_pin)==1 then
+  -- init mqtt client with keepalive timer 120sec
+  print("Create MQTT client.")
+  m = mqtt.Client("mailESP", 120, nil, nil)
+
+  --check if we have and ip, if we have just started then probably not
+  if wifi.sta.getip() ~= nil then
+    print("Connect to MQTT server.")
+    m:connect("192.168.0.106", 1883, 0, mqtt_connect, 
+                                        mqtt_fail)
+  else --register a listener for wifi events
+    wifi.sta.eventMonReg(wifi.STA_GOTIP,wifi_status)
+    wifi.sta.eventMonStart()
+  end
+else
+  print("Stop pin pulled to ground.")
+end
 print("end")
