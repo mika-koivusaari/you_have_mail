@@ -10,22 +10,27 @@ gpio.mode(led_pin, gpio.OUTPUT)
 --timer function that is called every minute
 timer = function()
   print("Alku")
+  --Check for ldr, if there is light without the led being on
+  --then mailbox lid is open and we don't know if there is mail.
   state=gpio.read(ldr_pin)
   if state==1 then
+    --there is too much light to know if led is on
     print("ylhäällä")
+    m:publish("/house/mail","too much light",0,0)
   else
+    --dark, next we will check if we see led
     print("alhaalla")
+    gpio.write(led_pin, gpio.HIGH) --led on
+    state=gpio.read(ldr_pin)  --read ldr
+    if state==1 then  --we see led, no mail
+      print("ylhäällä")
+      m:publish("/house/mail","no mail:(",0,0)
+    else  --we don't see led, there is something between led and ldr -> mail
+      print("alhaalla")
+      m:publish("/house/mail","you have mail",0,0)
+    end
   end
-  gpio.write(led_pin, gpio.HIGH)
-  state=gpio.read(ldr_pin)
-  if state==1 then
-    print("ylhäällä")
-    m:publish("/house/mail","no mail:(",0,0)
-  else
-    print("alhaalla")
-    m:publish("/house/mail","you have mail",0,0)
-  end
-  gpio.write(led_pin, gpio.LOW)
+  gpio.write(led_pin, gpio.LOW) --led off
 end
 
 --init timer
