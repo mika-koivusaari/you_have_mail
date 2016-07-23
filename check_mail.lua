@@ -18,8 +18,7 @@ function mqtt_connect(client)
   if state==1 then
     --there is too much light to know if led is on
     print("Too much light")
-    m:publish("/house/mail","too much light",0,0)
-    node.dsleep(sleep_seconds*1000000) --sleep for 20 seconds
+    m:publish("/house/mail","too much light",0,0,mqtt_puback)
   else
     --dark, next we will check if we see led
     print("It's dark, lets see if we have mail.")
