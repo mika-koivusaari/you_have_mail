@@ -2,7 +2,7 @@
 local ldr_pin=1
 local led_pin=8
 local stop_pin=2
-local sleep_seconds=20
+local sleep_seconds=60
 
 --set pin modes
 gpio.mode(ldr_pin, gpio.INPUT)
