@@ -1,8 +1,8 @@
 --define pins
-local ldr_pin=1
-local led_pin=8
-local stop_pin=2
-local sleep_seconds=60
+local ldr_pin=1 --GPIO5
+local led_pin=7 --GPIO13
+local stop_pin=2 --GPIO4
+local sleep_seconds=10
 
 --set pin modes
 gpio.mode(ldr_pin, gpio.INPUT)
@@ -73,6 +73,7 @@ if gpio.read(stop_pin)==1 then
     m:connect("192.168.0.106", 1883, 0, mqtt_connect, 
                                         mqtt_fail)
   else --register a listener for wifi events
+    print("Not connected to wifi, connect.")
     wifi.sta.eventMonReg(wifi.STA_GOTIP,wifi_status)
     wifi.sta.eventMonStart()
   end
