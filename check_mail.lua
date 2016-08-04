@@ -2,6 +2,7 @@
 local ldr_pin=1 --GPIO5
 local led_pin=6 --GPIO12
 local stop_pin=2 --GPIO4
+local tsl257_power_pin=5 --GPIO14
 local sleep_seconds=60
 
 --set pin modes
@@ -9,6 +10,10 @@ gpio.mode(ldr_pin, gpio.INPUT)
 gpio.mode(stop_pin, gpio.INPUT,gpio.PULLUP)
 gpio.mode(led_pin, gpio.OUTPUT)
 gpio.write(led_pin, gpio.LOW) --led off
+--Moving tsl257 power from 3.3v rail to gpio prevents
+--sensors from draining battery when not needed.
+gpio.mode(tsl257_power_pin, gpio.OUTPUT)
+gpio.write(tsl257_power_pin, gpio.HIGH) --TSL257 on
 
 --mqtt connection is ready, check for mail
 function mqtt_connect(client)
