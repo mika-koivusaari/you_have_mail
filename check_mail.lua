@@ -56,6 +56,7 @@ end
 --callback if mqtt connection fails
 function mqtt_fail(client, reason)
   print("MQTT broker connection failed reason: "..reason)
+  node.dsleep(sleep_seconds*1000000) --sleep for x seconds
 end
 
 --wifi status callback
