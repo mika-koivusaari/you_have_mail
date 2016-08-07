@@ -44,7 +44,7 @@ end
 --callback when we get mqtt close
 function mqtt_close (client)
   print("Connection to MQTT broker closed. Sleeping.")
-  node.dsleep(sleep_seconds*1000000) --sleep for 20 seconds
+  node.dsleep(sleep_seconds*1000000) --sleep for x seconds
 end
 --callback when we get mqtt puback
 function mqtt_puback(client)
@@ -58,12 +58,18 @@ function mqtt_fail(client, reason)
   print("MQTT broker connection failed reason: "..reason)
 end
 
---when we get an ip connect to mqtt broker
+--wifi status callback
 function wifi_status(previous_state)
-  print("Got IP.")
-  print("Connect to MQTT server.")
-  m:connect("192.168.0.106", 1883, 0, mqtt_connect, 
-                                      mqtt_fail)
+  --when we get an ip connect to mqtt broker
+  if wifi.sta.status()==wifi.STA_GOTIP then
+    print("Got IP.")
+    print("Connect to MQTT server.")
+    m:connect("192.168.0.106", 1883, 0, mqtt_connect, 
+                                        mqtt_fail)
+  else --else we have an error -> sleep and try again
+    print("Wifi connection error, status "..wifi.sta.status().." previous "..previous_state)
+    node.dsleep(sleep_seconds*1000000) --sleep for x seconds
+  end
 end
 
 --if stop pin has been pulled to ground then stop
@@ -89,6 +95,9 @@ if gpio.read(stop_pin)==1 then
   else --register a listener for wifi events
     print("Not connected to wifi, connect.")
     wifi.sta.eventMonReg(wifi.STA_GOTIP,wifi_status)
+    wifi.sta.eventMonReg(wifi.STA_WRONGPWD,wifi_status)
+    wifi.sta.eventMonReg(wifi.STA_APNOTFOUND,wifi_status)
+    wifi.sta.eventMonReg(wifi.STA_FAIL,wifi_status)
     wifi.sta.eventMonStart()
   end
 else
