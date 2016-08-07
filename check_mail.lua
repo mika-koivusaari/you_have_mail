@@ -77,10 +77,10 @@ end
 --this is so you can update lua scripts without flashing again
 if gpio.read(stop_pin)==1 then
   print("Create timer for sleeping, in case something goes wrong")
-  if not tmr.alarm(0, 5000, tmr.ALARM_SINGLE,
+  if not tmr.alarm(0, 10000, tmr.ALARM_SINGLE,
                    function()
                      print("Error, forced sleep")
-                     node.dsleep(sleep_seconds*1000000) --sleep for 60 seconds
+                     node.dsleep(sleep_seconds*1000000) --sleep for x seconds
                    end) then
     print("Could not start timer!")
   end
