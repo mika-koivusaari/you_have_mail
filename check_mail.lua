@@ -69,6 +69,14 @@ end
 --if stop pin has been pulled to ground then stop
 --this is so you can update lua scripts without flashing again
 if gpio.read(stop_pin)==1 then
+  print("Create timer for sleeping, in case something goes wrong")
+  if not tmr.alarm(0, 5000, tmr.ALARM_SINGLE,
+                   function()
+                     print("Error, forced sleep")
+                     node.dsleep(sleep_seconds*1000000) --sleep for 60 seconds
+                   end) then
+    print("Could not start timer!")
+  end
   -- init mqtt client with keepalive timer 120sec
   print("Create MQTT client.")
   m = mqtt.Client("mailESP", 120, nil, nil)
