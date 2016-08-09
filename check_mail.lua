@@ -134,6 +134,7 @@ if gpio.read(stop_pin)==1 then
     wifi.setmode(wifi.STATION)
     print(wifi.sta.getip())
 
+    wifi.sta.sethostname("YouHaveMail")
     wifi.sta.connect()
     m=mqtt.Client("MailESP", 120)
   else
