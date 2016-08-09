@@ -6,7 +6,7 @@ local ldr_pin=1 --GPIO5
 local led_pin=6 --GPIO12
 local stop_pin=2 --GPIO4
 local tsl257_power_pin=5 --GPIO14
-local sleep_seconds=10
+local sleep_seconds=60
 
 local TOO_MUCH_LIGHT=1
 local MAIL=2
@@ -54,6 +54,7 @@ function check_mail()
   return ERROR --we should newer get to here
 end
 
+--sleep function, so we can add some cleanup here if we need to.
 function sleep()
   wifi.sta.autoconnect(0)
   node.dsleep(sleep_seconds*1000000,MODEM_AFTER_SLEEP) --sleep for x seconds
@@ -127,6 +128,7 @@ if gpio.read(stop_pin)==1 then
   last_status=rtcmem.read32(127)
   if status~=last_status then
     print("Status changed, connect to wifi.")
+    --register callbacks so we know wifi status
     wifi.sta.eventMonReg(wifi.STA_GOTIP,wifi_status)
     wifi.sta.eventMonReg(wifi.STA_WRONGPWD,wifi_status)
     wifi.sta.eventMonReg(wifi.STA_APNOTFOUND,wifi_status)
