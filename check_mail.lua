@@ -54,6 +54,11 @@ function check_mail()
   return ERROR --we should newer get to here
 end
 
+function sleep()
+  wifi.sta.autoconnect(0)
+  node.dsleep(sleep_seconds*1000000,MODEM_AFTER_SLEEP) --sleep for x seconds
+end
+
 --mqtt connection is ready, check for mail
 function mqtt_connect(client)
   print("Connected to MQTT broker")
@@ -76,11 +81,11 @@ end
 --callback when we get mqtt close
 function mqtt_close (client)
   print("Connection to MQTT broker closed. Sleeping.")
-  wifi.sta.disconnect()
-  node.dsleep(sleep_seconds*1000000,MODEM_AFTER_SLEEP) --sleep for x seconds
+  sleep()
 end
 --callback when we get mqtt puback
 function mqtt_puback(client)
+  rtcmem.write32(127,status) --write status only if we have published it
   print("message published")
   m:on("offline", mqtt_close)
   m:close()
@@ -89,8 +94,7 @@ end
 --callback if mqtt connection fails
 function mqtt_fail(client, reason)
   print("MQTT broker connection failed reason: "..reason)
-  wifi.sta.disconnect()
-  node.dsleep(sleep_seconds*1000000,MODEM_AFTER_SLEEP) --sleep for x seconds
+  sleep()
 end
 
 --wifi status callback
@@ -103,8 +107,7 @@ function wifi_status(previous_state)
                                         mqtt_fail)
   else --else we have an error -> sleep and try again
     print("Wifi connection error, status "..wifi.sta.status().." previous "..previous_state)
-    wifi.sta.disconnect()
-    node.dsleep(sleep_seconds*1000000,MODEM_AFTER_SLEEP) --sleep for x seconds
+    sleep()
   end
 end
 
@@ -115,8 +118,7 @@ if gpio.read(stop_pin)==1 then
   if not tmr.alarm(0, 10000, tmr.ALARM_SINGLE,
                    function()
                      print("Error, forced sleep")
-                     wifi.sta.disconnect()
-                     node.dsleep(sleep_seconds*1000000,MODEM_AFTER_SLEEP) --sleep for x seconds
+                     sleep()
                    end) then
     print("Could not start timer!")
   end
@@ -124,7 +126,6 @@ if gpio.read(stop_pin)==1 then
   status=check_mail()
   last_status=rtcmem.read32(127)
   if status~=last_status then
-    rtcmem.write32(127,status)
     print("Status changed, connect to wifi.")
     wifi.sta.eventMonReg(wifi.STA_GOTIP,wifi_status)
     wifi.sta.eventMonReg(wifi.STA_WRONGPWD,wifi_status)
@@ -139,8 +140,7 @@ if gpio.read(stop_pin)==1 then
     m=mqtt.Client("MailESP", 120)
   else
     print("No change, sleep")
-    wifi.sta.disconnect()
-    node.dsleep(sleep_seconds*1000000,MODEM_AFTER_SLEEP) --sleep for x seconds
+    sleep()
   end
 else
   print("Stop pin pulled to ground.")
