@@ -66,16 +66,16 @@ function mqtt_connect(client)
   if status==TOO_MUCH_LIGHT then
     --there is too much light to know if led is on
     print("Too much light")
-    m:publish("/house/mail","too much light",0,0,mqtt_puback)
+    m:publish("/house/mail","too much light",0,1,mqtt_puback)
   elseif status==NO_MAIL then
     print("No mail")
-    m:publish("/house/mail","no mail:(",0,0,mqtt_puback)
+    m:publish("/house/mail","no mail:(",0,1,mqtt_puback)
   elseif status==MAIL then
     print("Mail")
-    m:publish("/house/mail","you have mail",0,0,mqtt_puback)
+    m:publish("/house/mail","you have mail",0,1,mqtt_puback)
   else
     print("Error")
-    m:publish("/house/mail","error",0,0,mqtt_puback)
+    m:publish("/house/mail","error",0,1,mqtt_puback)
   end
 end
 
